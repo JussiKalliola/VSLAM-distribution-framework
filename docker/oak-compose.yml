@@ -1,0 +1,31 @@
+version: '2.3'
+
+services:
+
+  oakd:
+    image: luxonis/depthai-ros:humble-latest
+    container_name: oakd_container
+    privileged: true
+    #network_mode: host
+    network_mode: container:tr
+    ipc: container:tr
+    #pid: host
+    device_cgroup_rules:
+      - 'c 189:* rmw'
+    environment:
+      #ROS_DISCOVERY_SERVER: 'localhost:8888' #'fc94:503b:10a8:bafe:99dc:41e3:18eb:d7ee:8888'
+      ROS_LOCALHOST_ONLY: 0
+      ROS_DOMAIN_ID: 0
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      FASTRTPS_DEFAULT_PROFILES_FILE: /root/dds/husarnet_profile.xml
+      #ROS_SUPER_CLIENT: 'True'
+    volumes:
+      - "/tmp/.X11-unix:/tmp/.X11-unix:rw"
+      - /dev/:/dev/
+      - ../config/oakd/oakd-mini.yaml:/opt/oakd-mini.yaml
+      - ../config/dds:/root/dds
+    stdin_open: false
+    tty: false
+    command: "ros2 launch depthai_ros_driver camera.launch.py params_file:=/opt/oakd-mini.yaml"
+
+

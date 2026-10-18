@@ -1,0 +1,56 @@
+version: '2.3'
+
+x-husarnet-net:
+  &husarnet-net
+  network_mode: service:husarnet-talker
+  ipc: service:husarnet-talker
+
+services:
+
+  husarnet-talker:
+    image: husarnet/husarnet:2.0.180
+    container_name: husarnet-talker
+    ipc: shareable
+    networks:
+      - network_talker
+    volumes:
+      - ../config/husarnet:/var/lib/husarnet
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    environment:
+      - HOSTNAME=nuc
+      - JOINCODE=nLqEyxnHqVYKkqEmh9AA9f
+      - HUSARNET_DEBUG=1
+
+  ros2router:
+    image: husarnet/ros2router:1.8.0
+    <<: *husarnet-net
+    #network_mode: container:tr
+    #ipc: container:tr
+    container_name: ros2router
+    volumes:
+      - ../config/dds/filter.yaml:/filter.yaml
+    environment:
+      - LOCAL_TRANSPORT=builtin
+      #- DISCOVERY_SERVER=fc94:503b:10a8:bafe:99dc:41e3:18eb:d7ee
+      - DISCOVERY_SERVER_LISTENING_PORT=11811
+      - DISCOVERY_SERVER_ID=0
+      #environment:
+      #  - DISCOVERY_SERVER=fc94:503b:10a8:bafe:99dc:41e3:18eb:d7ee
+      #  - DISCOVERY_SERVER_ID=2
+      #  - DISCOVERY_SERVER_LISTENING_PORT=8888
+      #  - ROS_DOMAIN_ID=0
+      #  - WHITELIST_INTERFACES=172.17.0.1
+      #  - |
+      #    LOCAL_PARTICIPANT=
+      #      - name: LocalParticipant
+      #        kind: local
+      #        domain: 0
+
+networks:
+  network_talker:
+    driver: bridge

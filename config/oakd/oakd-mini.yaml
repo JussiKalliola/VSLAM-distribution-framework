@@ -1,0 +1,17 @@
+/oak:
+  ros__parameters:
+    camera:
+      i_pipeline_type: rgb
+      i_nn_type: none
+      #i_usb_port_id: "8087:0033"
+      i_mx_id: "18443010D145780E00"
+      i_usb_speed: HIGH
+    rgb:
+      #i_resolution: '720'
+      i_fps: 20.0
+      r_set_man_focus: true
+      r_set_man_whitebalance: true
+      r_set_man_exposure: true
+      r_exposure: 7000
+      i_isp_den: 3
+      i_isp_num: 1

@@ -1,0 +1,12 @@
+datasets/
+results/
+docker/
+scripts/
+doxygen/
+ros_ws/
+README.md
+.git
+.gitignore
+.gitmodules
+.DS_Store
+.vscode

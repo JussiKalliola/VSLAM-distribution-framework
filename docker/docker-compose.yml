@@ -1,0 +1,89 @@
+version: '2.3'
+
+x-husarnet-net:
+  &husarnet-net
+  network_mode: service:husarnet-talker
+  ipc: service:husarnet-talker
+
+services:
+
+  husarnet-talker:
+    image: husarnet/husarnet:2.0.180
+    container_name: husarnet-talker
+    ipc: shareable
+    networks:
+      - network_talker
+    volumes:
+      - ../config/husarnet:/var/lib/husarnet
+      - ../config/dds:/root/dds
+    sysctls:
+      - net.ipv6.conf.all.disable_ipv6=0
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun
+    environment:
+      - HOSTNAME=nuc
+      - JOINCODE=nLqEyxnHqVYKkqEmh9AA9f
+      - HUSARNET_DEBUG=1
+      #- FASTRTPS_DEFAULT_PROFILES_FILE=/root/config/dds/husarnet_profile.xml
+
+  ros2router:
+    image: husarnet/ros2router:1.8.0
+    <<: *husarnet-net
+    #network_mode: container:tr
+    #ipc: container:tr
+    container_name: ros2router
+    volumes:
+      - ../config/dds/filter.yaml:/filter.yaml
+    environment:
+      - HUSARNET_PARTICIPANT_ENABLED=TRUE
+      #- LOCAL_TRANSPORT=builtin
+      - ROS_LOCALHOST_ONLY=0
+      #- PARTICIPANTS=husarnet,lo
+      #- DISCOVERY_SERVER=fc94:503b:10a8:bafe:99dc:41e3:18eb:d7ee
+      #- DISCOVERY_SERVER_LISTENING_PORT=11811
+      #- DISCOVERY_SERVER_ID=0
+      #environment:
+      #  - DISCOVERY_SERVER=fc94:503b:10a8:bafe:99dc:41e3:18eb:d7ee
+      #  - DISCOVERY_SERVER_ID=2
+      #  - DISCOVERY_SERVER_LISTENING_PORT=8888
+      #  - ROS_DOMAIN_ID=0
+      #  - WHITELIST_INTERFACES=172.17.0.1
+      #  - |
+      #    LOCAL_PARTICIPANT=
+      #      - name: LocalParticipant
+      #        kind: local
+      #        domain: 0
+      #        transport: udp
+
+
+  oakd:
+    image: luxonis/depthai-ros:humble-latest
+    <<: *husarnet-net
+    container_name: oakd_container
+    privileged: true
+    #network_mode: host
+    #network_mode: container:tr
+    #ipc: container:tr
+    #pid: host
+    device_cgroup_rules:
+      - 'c 189:* rmw'
+    environment:
+      #ROS_DISCOVERY_SERVER: 'localhost:8888' #'fc94:503b:10a8:bafe:99dc:41e3:18eb:d7ee:8888'
+      ROS_LOCALHOST_ONLY: 1
+      ROS_DOMAIN_ID: 0
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      #ROS_SUPER_CLIENT: 'True'
+    volumes:
+      - "/tmp/.X11-unix:/tmp/.X11-unix:rw"
+      - /dev/:/dev/
+      - ../config/oakd/oakd-mini.yaml:/opt/oakd-mini.yaml
+    stdin_open: false
+    tty: false
+    command: "ros2 launch depthai_ros_driver camera.launch.py params_file:=/opt/oakd-mini.yaml"
+
+
+networks:
+  network_talker:
+    driver: bridge
